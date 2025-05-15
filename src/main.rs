@@ -49,7 +49,7 @@ impl FileHolder {
         for line in self.mem.iter() {
             let mut temp_line: String = String::new();
             for c in line.chars() {
-                if seen_letters.contains(&c) {
+                if seen_letters.contains(&c) && c != letter {
                     temp_line.push(c);
                 } else {
                     temp_line.push(self.letter);
@@ -63,7 +63,7 @@ impl FileHolder {
 fn main() {
     let mut file_holder = FileHolder {
         mem: Vec::new(),
-        letter: 'x',
+        letter: ' ',
         count: 1,
         ..Default::default()
     };
