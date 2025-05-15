@@ -1,6 +1,8 @@
 use std::fs::read_to_string;
 use std::io;
-use std::path::Path;
+use std::fs;
+use std::os::windows::fs::FileTypeExt;
+use std::path::PathBuf;
 
 #[derive(Default)]
 struct FileHolder {
@@ -49,7 +51,7 @@ impl FileHolder {
         for line in self.mem.iter() {
             let mut temp_line: String = String::new();
             for c in line.chars() {
-                if seen_letters.contains(&c) && c != letter {
+                if seen_letters.contains(&c) && c != self.letter {
                     temp_line.push(c);
                 } else {
                     temp_line.push(self.letter);
@@ -60,16 +62,43 @@ impl FileHolder {
     }
 }
 
+fn display_directorys_txt_files() -> Vec<PathBuf> {     
+
+    let mut vec: Vec<PathBuf> = Vec::new();
+    for entry in fs::read_dir("./src").expect("File not found") {
+        let dir = entry.expect("Entry Failiure; ").path();
+
+        //check if file is txt
+        let mut is_txt: bool = false;
+        if dir.is_file() {           
+            if let Some(ext) = dir.extension() {
+                is_txt = ext == "txt";
+            }
+        }
+        
+        if is_txt {
+            println!("file: {}", dir.display());
+            vec.push(dir);
+        }        
+    }
+    vec
+
+}
+
 fn main() {
     let mut file_holder = FileHolder {
         mem: Vec::new(),
         letter: ' ',
         count: 1,
         ..Default::default()
-    };
+    };    
+    
+    let vec = display_directorys_txt_files();
 
-    let path = Path::new("./hello_world.txt"); // takes the current path the .exe file is in
+    //let the user choose a file out of the found txt files.
+    
 
+    /*
     //read file contents into File struct
     for line in read_to_string(path).unwrap().lines() {
         //put each line into a vector in FileHolder
@@ -84,4 +113,5 @@ fn main() {
             .read_line(&mut input)
             .expect("Failed to read line");        
     }
+     */
 }
