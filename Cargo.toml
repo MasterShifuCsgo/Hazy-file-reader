@@ -1,6 +1,6 @@
 [package]
-name = "fancy-file-reader"
+name = "hazy-file-reader"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
