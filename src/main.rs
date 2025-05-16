@@ -1,10 +1,8 @@
-use core::panic;
-use std::fs;
-use std::fs::read_to_string;
-use std::io;
-use std::path::PathBuf;
-use std::process::Command;
-
+use std::fs::{self, read_to_string, File};
+use std::hash::Hash;
+use std::{io, vec};
+use std::path::{Path, PathBuf};
+use std::collections::HashSet;
 #[derive(Default)]
 struct FileHolder {
     mem: Vec<String>,
@@ -20,7 +18,7 @@ impl FileHolder {
     fn display(&mut self) {
         self.make_one_letter(self.count);
         self.count += 1;
-
+        
         for line in self.temp.iter() {
             println!("{}", line);
         }
@@ -28,19 +26,21 @@ impl FileHolder {
     }
 
     fn make_one_letter(&mut self, nr: u32) {
-        //dev config
-        let replacment_letter: char = 'z';
+        
 
-        let mut seen_letters: Vec<char> = Vec::new();
+
+        //dev config        
+        let replacment_letter: char = 'z';
+        let mut seen_letters = HashSet::new();
         let mut count = 0;
+
         // reads the file contents and chooses nr letters that has not been seen.
         'outer: for line in self.mem.iter() {
             for c in line.chars() {
                 if count == nr {
                     break 'outer;
                 }
-                if !seen_letters.contains(&c) {
-                    seen_letters.push(c);
+                if seen_letters.insert(c) {                    
                     count += 1;
                 }
             }
@@ -58,6 +58,9 @@ impl FileHolder {
             }
             self.temp.push(temp_line);
         }
+
+        print!("Amount of uniqe letters: {}", seen_letters.len());
+
     }
 }
 
@@ -86,16 +89,9 @@ fn display_directorys_txt_files() -> Vec<PathBuf> {
     vec
 }
 
-fn main() {
-    let mut file_holder = FileHolder {
-        mem: Vec::new(),
-        count: 1,
-        ..Default::default()
-    };
-
-    let vec = display_directorys_txt_files();
-
-    //let the user choose a file out of the found txt files.
+//let the user choose a file out of the found txt files.
+fn select_file() -> PathBuf {
+    let mut vec = display_directorys_txt_files();
     let mut user_choise: String = String::new();
     println!("Choose correct index for your txt file: ");
     io::stdin()
@@ -109,21 +105,43 @@ fn main() {
 
     if index >= vec.len() {
         panic!("User entered index exceeds the maximum index");
-    }
+    }    
 
-    let path = &vec[index];
+    vec.into_iter()
+    .nth(index)
+    .expect("Index out of bounds")
+}
 
-    //read file contents into File struct
-    for line in read_to_string(path).unwrap().lines() {
-        //put each line into a vector in FileHolder
-        file_holder.load_into_memory(line);
-    }
-
-    let mut input = String::new();
+fn run_loop(file_holder: &mut FileHolder){
+    let mut input: String = String::new();
     loop {
         file_holder.display();
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
+        if input.trim() == "exit" {
+            break;
+        }
     }
+    input.clear();
+}
+
+fn load_content_to_memory(path: PathBuf, file_holder: &mut FileHolder) {
+//read file contents into File struct
+    for line in read_to_string(path).unwrap().lines() {
+        //put each line into a vector in FileHolder
+        file_holder.load_into_memory(line);
+    }
+}
+
+fn main() {
+    let mut file_holder: FileHolder = FileHolder {
+        mem: Vec::new(),
+        count: 1,
+        ..Default::default()
+    };        
+    let path: PathBuf = select_file();
+    load_content_to_memory(path, &mut file_holder);
+    run_loop(&mut file_holder);
+    
 }
